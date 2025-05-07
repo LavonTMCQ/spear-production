@@ -1,0 +1,18 @@
+[
+  {
+    "id": "5c860a35-3da7-4a73-bdf9-75e49ebd0652",
+    "email": "admin@spear.com",
+    "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "name": "Admin User",
+    "role": "ADMIN",
+    "createdAt": "2025-04-16T23:34:58.723Z"
+  },
+  {
+    "id": "207a4f0c-f1c7-44c0-9949-95e4bdaa9a96",
+    "email": "client@example.com",
+    "password": "186474c1f2c2f735a54c2cf82ee8e87f2a5cd30940e280029363fecedfc5328c",
+    "name": "Test Client",
+    "role": "CLIENT",
+    "createdAt": "2025-04-16T23:34:58.724Z"
+  }
+]

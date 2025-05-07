@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String        @id @default(uuid())
+  email          String        @unique
+  name           String?
+  role           Role          @default(CLIENT)
+  teamViewerUser String?       // if managing sub-accounts
+  subscriptions  Subscription[]
+  devices        Device[]
+}
+
+model Device {
+  id                 String    @id @default(uuid())
+  name               String
+  teamViewerDeviceId String    @unique
+  assignedTo         User?     @relation(fields: [userId], references: [id])
+  userId             String?
+  lastCheckIn        CheckIn?
+  checkIns           CheckIn[]
+}
+
+model Subscription {
+  id               String   @id @default(uuid())
+  stripeSubId      String   @unique
+  status           String
+  currentPeriodEnd DateTime
+  user             User     @relation(fields: [userId], references: [id])
+  userId           String
+}
+
+model CheckIn {
+  id        String   @id @default(uuid())
+  device    Device   @relation(fields: [deviceId], references: [id])
+  deviceId  String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
