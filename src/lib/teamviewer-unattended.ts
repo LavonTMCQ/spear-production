@@ -183,10 +183,9 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
 
       // Create the proper web client URL for unattended access (Host mode)
       // This is the format that works with the official TeamViewer web client
-      // The key parameters are:
-      // - machineId: The remote control ID of the device
-      // - connectByKnownDeviceMode: Set to RemoteControl for unattended access
-      const webClientUrl = `https://web.teamviewer.com/Connect?uiMode=OneUI&lng=en&TabMode=MultiTabUI&backgroundTabID=${Math.floor(Math.random() * 10000000000000000)}&machineId=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
+      // For Android devices, we need to use the Easy Access format
+      // The key is to use the correct URL format with the device ID
+      const webClientUrl = `https://login.teamviewer.com/Connect?deviceId=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}`;
 
       // Create the proper direct connection URL for unattended access (Host mode)
       // We'll prioritize the web client URL since it's more reliable
@@ -196,7 +195,8 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
       console.log(`- Web client URL: ${webClientUrl}`);
 
       // Also create a backup native app URL in case the user has TeamViewer installed
-      const nativeAppUrl = `teamviewer10://control?s=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
+      // Use the simpler "Easy Access" deep link format for Android devices
+      const nativeAppUrl = `teamviewer10://remotecontrol?device=${formattedRemoteId}`;
       console.log(`- Native app URL (backup): ${nativeAppUrl}`);
 
       // Return a comprehensive result with all available connection options
