@@ -16,7 +16,7 @@ export function MetaTags({
   title = "SPEAR - Secure Platform for Extended Augmented Reality",
   description = "SPEAR provides enterprise-grade remote device management with security, location verification, and compliance solutions for various industries.",
   keywords = "remote access, device management, security, compliance, location verification, TeamViewer integration",
-  ogImage = "/images/spear-og-image.jpg",
+  ogImage = "/images/spear-logo.PNG",
   ogType = "website",
   twitterCard = "summary_large_image",
   canonicalUrl,

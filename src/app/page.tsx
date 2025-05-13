@@ -22,7 +22,7 @@ export default function Home() {
         description="SPEAR provides enterprise-grade remote device management with security, location verification, and compliance solutions for various industries."
         keywords="remote device management, TeamViewer integration, security, compliance, location verification"
         ogType="website"
-        ogImage="/images/spear-og-image.jpg"
+        ogImage="/images/spear-logo.PNG"
       />
       <OrganizationLD />
       <WebsiteLD />
@@ -49,18 +49,15 @@ export default function Home() {
                   </Button>
                 </div>
               </div>
-              <div className="relative h-[400px] rounded-lg overflow-hidden shadow-xl">
+              <div className="relative h-[400px] rounded-lg overflow-hidden shadow-xl bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center">
+                <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-30"></div>
                 <Image
-                  src="/images/hero-dashboard.jpg"
-                  alt="SPEAR Dashboard"
-                  fill
-                  className="object-cover"
+                  src="/images/spear-logo.PNG"
+                  alt="SPEAR Logo"
+                  width={300}
+                  height={300}
+                  className="object-contain z-10"
                   priority
-                  onError={(e) => {
-                    // Fallback if image doesn't exist
-                    const target = e.target as HTMLImageElement;
-                    target.src = "https://placehold.co/800x600/slate/white?text=SPEAR+Platform";
-                  }}
                 />
               </div>
             </div>
