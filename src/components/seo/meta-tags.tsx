@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 
 interface MetaTagsProps {
   title?: string;
@@ -22,17 +22,17 @@ export function MetaTags({
   canonicalUrl,
   noIndex = false,
 }: MetaTagsProps) {
-  const router = useRouter();
+  const pathname = usePathname();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://spear-platform.com";
-  const fullUrl = canonicalUrl || `${siteUrl}${router.asPath}`;
-  
+  const fullUrl = canonicalUrl || `${siteUrl}${pathname}`;
+
   return (
     <Head>
       {/* Basic Meta Tags */}
       <title>{title}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
-      
+
       {/* Open Graph Tags */}
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
@@ -40,23 +40,23 @@ export function MetaTags({
       <meta property="og:url" content={fullUrl} />
       <meta property="og:image" content={`${siteUrl}${ogImage}`} />
       <meta property="og:site_name" content="SPEAR Platform" />
-      
+
       {/* Twitter Card Tags */}
       <meta name="twitter:card" content={twitterCard} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={`${siteUrl}${ogImage}`} />
-      
+
       {/* Canonical URL */}
       <link rel="canonical" href={fullUrl} />
-      
+
       {/* Robots Control */}
       {noIndex ? (
         <meta name="robots" content="noindex, nofollow" />
       ) : (
         <meta name="robots" content="index, follow" />
       )}
-      
+
       {/* Additional Meta Tags */}
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />

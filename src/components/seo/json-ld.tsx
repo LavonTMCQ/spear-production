@@ -1,4 +1,4 @@
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import Script from "next/script";
 
 interface OrganizationLDProps {
@@ -19,7 +19,7 @@ export function OrganizationLD({
   ],
 }: OrganizationLDProps) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://spear-platform.com";
-  
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -28,7 +28,7 @@ export function OrganizationLD({
     "logo": `${siteUrl}${logo}`,
     "sameAs": sameAs,
   };
-  
+
   return (
     <Script
       id="organization-jsonld"
@@ -61,7 +61,7 @@ export function WebsiteLD({
       "query-input": "required name=search_term_string",
     },
   };
-  
+
   return (
     <Script
       id="website-jsonld"
@@ -92,10 +92,10 @@ export function ArticleLD({
   publisherName = "SPEAR Platform",
   publisherLogo = "/images/spear-logo.PNG",
 }: ArticleLDProps) {
-  const router = useRouter();
+  const pathname = usePathname();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://spear-platform.com";
-  const fullUrl = `${siteUrl}${router.asPath}`;
-  
+  const fullUrl = `${siteUrl}${pathname}`;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -121,7 +121,7 @@ export function ArticleLD({
       "@id": fullUrl,
     },
   };
-  
+
   return (
     <Script
       id="article-jsonld"
@@ -151,7 +151,7 @@ export function FAQPageLD({ questions }: FAQPageLDProps) {
       },
     })),
   };
-  
+
   return (
     <Script
       id="faq-jsonld"
@@ -183,7 +183,7 @@ export function ProductLD({
   reviewCount,
 }: ProductLDProps) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://spear-platform.com";
-  
+
   const jsonLd: any = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -197,7 +197,7 @@ export function ProductLD({
       "availability": `https://schema.org/${availability}`,
     },
   };
-  
+
   // Add reviews if provided
   if (ratingValue && reviewCount) {
     jsonLd.aggregateRating = {
@@ -206,7 +206,7 @@ export function ProductLD({
       "reviewCount": reviewCount,
     };
   }
-  
+
   return (
     <Script
       id="product-jsonld"

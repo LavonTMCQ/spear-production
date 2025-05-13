@@ -7,7 +7,8 @@ import {
   DevicePhoneMobileIcon,
   CreditCardIcon,
   ExclamationCircleIcon,
-  LinkIcon
+  LinkIcon,
+  VideoCameraIcon
 } from "@heroicons/react/24/outline";
 import { TeamViewerApiStatus } from "@/components/admin/teamviewer-api-status";
 import { isTeamViewerConfigured } from "@/lib/teamviewer-config";
@@ -326,7 +327,51 @@ export default function AdminDashboardPage() {
 
           <TeamViewerApiStatus />
 
+          <Card className="overflow-hidden border-slate-200 dark:border-slate-800 transition-all duration-200 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 bg-slate-900/40">
+            <CardHeader className="pb-0 pt-5">
+              <CardTitle className="text-lg flex items-center">
+                <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg mr-3">
+                  <VideoCameraIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                Remote Control
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-3 pb-5">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="flex items-center">
+                    <span className={`h-2 w-2 rounded-full ${isTeamViewerReady ? 'bg-green-500' : 'bg-amber-500'} mr-2`}></span>
+                    <span className="text-sm font-medium">{isTeamViewerReady ? 'Ready to Connect' : 'Setup Required'}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Control devices remotely</p>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.href = '/admin/remote-control'}
+                  >
+                    Connect
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      // Try to launch TeamViewer client first
+                      window.location.href = `teamviewer10://control?device=579487224`;
 
+                      // Fallback to web client after a short delay
+                      setTimeout(() => {
+                        window.open('https://start.teamviewer.com/579487224', '_blank');
+                      }, 1000);
+                    }}
+                  >
+                    Direct
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 

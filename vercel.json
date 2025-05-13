@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "regions": ["iad1"],
+  "env": {
+    "NEXT_PUBLIC_TEAMVIEWER_CLIENT_ID": "748865-SKNA4jUQk10HvZIZhVoD",
+    "NEXT_PUBLIC_TEAMVIEWER_CLIENT_SECRET": "XhWKLqAlNJM3YVkEPiFA",
+    "NEXT_PUBLIC_TEAMVIEWER_REDIRECT_URI": "https://spear-app.vercel.app/api/auth/callback/teamviewer",
+    "TEAMVIEWER_CLIENT_ID": "748865-SKNA4jUQk10HvZIZhVoD",
+    "TEAMVIEWER_CLIENT_SECRET": "XhWKLqAlNJM3YVkEPiFA",
+    "TEAMVIEWER_REDIRECT_URI": "https://spear-app.vercel.app/api/auth/callback/teamviewer",
+    "DATABASE_URL": "postgresql://postgres:MZJFKNWbjshCnQHDbLsetLFvkpvUDtqh@gondola.proxy.rlwy.net:31227/railway?schema=public",
+    "NEXTAUTH_SECRET": "spear-app-production-secret-key-change-this-in-production",
+    "NEXTAUTH_URL": "https://spear-app.vercel.app"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm run build"
+  },
+  "deploy": {
+    "startCommand": "npm start",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  },
+  "variables": {
+    "NEXT_PUBLIC_TEAMVIEWER_CLIENT_ID": "748865-SKNA4jUQk10HvZIZhVoD",
+    "NEXT_PUBLIC_TEAMVIEWER_CLIENT_SECRET": "XhWKLqAlNJM3YVkEPiFA",
+    "NEXT_PUBLIC_TEAMVIEWER_REDIRECT_URI": "https://spear-app.vercel.app/api/auth/callback/teamviewer",
+    "TEAMVIEWER_CLIENT_ID": "748865-SKNA4jUQk10HvZIZhVoD",
+    "TEAMVIEWER_CLIENT_SECRET": "XhWKLqAlNJM3YVkEPiFA",
+    "TEAMVIEWER_REDIRECT_URI": "https://spear-app.vercel.app/api/auth/callback/teamviewer",
+    "NEXTAUTH_SECRET": "spear-app-production-secret-key-change-this-in-production",
+    "NEXTAUTH_URL": "https://spear-app.vercel.app"
+  }
+}

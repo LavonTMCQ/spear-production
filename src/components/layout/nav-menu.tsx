@@ -105,6 +105,11 @@ function NavMenuComponent({ role }: NavMenuProps) {
       icon: DevicePhoneMobileIcon,
     },
     {
+      name: "Remote Control",
+      href: "/admin/remote-control",
+      icon: VideoCameraIcon,
+    },
+    {
       name: "TeamViewer Integration",
       href: "/admin/integrations",
       icon: LinkIcon,
