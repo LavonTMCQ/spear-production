@@ -7,6 +7,7 @@
  */
 
 import { getTeamViewerToken, formatTeamViewerDeviceId } from './teamviewer-api';
+import { getTeamViewerConfig } from './teamviewer-config';
 
 // Define types for TeamViewer Unattended API responses
 export interface TeamViewerUnattendedDevice {
@@ -31,8 +32,12 @@ export interface UnattendedConnectionResult {
   password: string;
   connectionUrl: string;
   webClientUrl?: string;
+  nativeAppUrl?: string;
   endCustomerUrl?: string;
   sessionId?: string;
+  isUnattendedAccess?: boolean;
+  deviceName?: string;
+  deviceType?: string;
   expiresAt: string; // ISO date string
 }
 
@@ -77,12 +82,19 @@ export async function getUnattendedDevices(): Promise<TeamViewerUnattendedDevice
     if (data.devices && data.devices.length > 0) {
       // Map the API response to our interface
       const mappedDevices = data.devices.map((device: any) => {
+        // Get the Android device IDs from configuration
+        const { androidDeviceId, androidRemoteId } = getTeamViewerConfig();
+
         // For your specific Android device, force supportsUnattended to true
         // This is a workaround for devices that support unattended access but don't report it correctly
         const isYourAndroidDevice =
-          (device.remotecontrol_id === '579487224' ||
-           device.device_id === 'd1645844505' ||
-           device.id === 'd1645844505');
+          (device.remotecontrol_id === androidRemoteId ||
+           device.device_id === androidDeviceId ||
+           device.id === androidDeviceId);
+
+        if (isYourAndroidDevice) {
+          console.log(`Found Android device with unattended access support: ${device.alias || device.name || device.device_id || device.id}`);
+        }
 
         return {
           id: device.device_id || device.id,
@@ -144,11 +156,14 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
     const formattedDeviceId = formatTeamViewerDeviceId(device.deviceId);
     console.log('Formatted device ID for connection:', formattedDeviceId);
 
+    // Get the Android device IDs from configuration
+    const { androidDeviceId, androidRemoteId } = getTeamViewerConfig();
+
     // Check if this is your Android device that supports unattended access
     const isYourAndroidDevice =
-      (device.deviceId === 'r579487224' ||
-       device.deviceId === '579487224' ||
-       device.id === 'd1645844505');
+      (device.deviceId === `r${androidRemoteId}` ||
+       device.deviceId === androidRemoteId ||
+       device.id === androidDeviceId);
 
     if (isYourAndroidDevice || device.supportsUnattended) {
       console.log('Device supports unattended access, using direct connection...');
@@ -168,6 +183,9 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
 
       // Create the proper web client URL for unattended access (Host mode)
       // This is the format that works with the official TeamViewer web client
+      // The key parameters are:
+      // - machineId: The remote control ID of the device
+      // - connectByKnownDeviceMode: Set to RemoteControl for unattended access
       const webClientUrl = `https://web.teamviewer.com/Connect?uiMode=OneUI&lng=en&TabMode=MultiTabUI&backgroundTabID=${Math.floor(Math.random() * 10000000000000000)}&machineId=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
 
       // Create the proper direct connection URL for unattended access (Host mode)
@@ -181,12 +199,17 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
       const nativeAppUrl = `teamviewer10://control?s=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
       console.log(`- Native app URL (backup): ${nativeAppUrl}`);
 
+      // Return a comprehensive result with all available connection options
+      // For unattended access, we don't need a session ID or password
       return {
         deviceId: formattedRemoteId,
         password: '', // No password needed for unattended access
         connectionUrl: connectionUrl, // Use web client URL as primary connection method
         webClientUrl: webClientUrl,
         nativeAppUrl: nativeAppUrl, // Add native app URL as a backup
+        isUnattendedAccess: true, // Flag to indicate this is an unattended access connection
+        deviceName: deviceName,
+        deviceType: deviceType,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours by default
       };
     }
@@ -249,6 +272,9 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
         webClientUrl: data.webclient_supporter_link,
         endCustomerUrl: data.end_customer_link,
         sessionId: sessionId,
+        isUnattendedAccess: false, // Flag to indicate this is a session-based connection
+        deviceName: device.name,
+        deviceType: device.deviceInfo?.model ? 'Mobile' : 'Desktop',
         expiresAt: data.valid_until || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours by default
       };
     } catch (error) {
@@ -262,6 +288,11 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
         deviceId: formattedDeviceId,
         password: '',
         connectionUrl: `https://start.teamviewer.com/${formattedDeviceId}`,
+        webClientUrl: `https://start.teamviewer.com/${formattedDeviceId}`,
+        nativeAppUrl: `teamviewer10://control?s=${formattedDeviceId}`,
+        isUnattendedAccess: false, // This is a fallback, not unattended access
+        deviceName: device.name,
+        deviceType: device.deviceInfo?.model ? 'Mobile' : 'Desktop',
         expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 minutes for direct connection
       };
     }

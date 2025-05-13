@@ -67,33 +67,7 @@ export interface TeamViewerSession {
   online?: boolean;
 }
 
-// Mock data for development - will be replaced with real API calls
-const mockDevices: TeamViewerDevice[] = [
-  {
-    id: 'd12345',
-    name: 'My Phone',
-    online_state: 'online',
-    alias: 'my-phone',
-    last_seen: new Date().toISOString(),
-    device_info: {
-      model: 'Pixel 5',
-      manufacturer: 'Google',
-      os_version: 'Android 12'
-    }
-  },
-  {
-    id: 'd67890',
-    name: 'Test Device',
-    online_state: 'offline',
-    alias: 'test-device',
-    last_seen: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-    device_info: {
-      model: 'Pixel 5',
-      manufacturer: 'Google',
-      os_version: 'Android 12'
-    }
-  }
-];
+// We're using real API calls now, no mock data needed
 
 /**
  * Get an access token for the TeamViewer API
@@ -101,9 +75,8 @@ const mockDevices: TeamViewerDevice[] = [
  * @returns Promise with the access token
  */
 export async function getTeamViewerToken(): Promise<string> {
-  // Use the script token for authentication
-  // This is a simpler approach than OAuth for development and testing
-  const scriptToken = '26405094-jajtBr0ScJN8z3e83zsY';
+  // Use the script token from configuration
+  const { scriptToken } = getTeamViewerConfig();
   console.log('Using TeamViewer script token for authentication');
   return scriptToken;
 }

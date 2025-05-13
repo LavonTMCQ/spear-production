@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { NotificationProvider } from "@/contexts/notification-context";
 import { User } from "@/types/user";
 import { Loading } from "@/components/ui/loading";
-import { auth } from "@/lib/auth";
+import { useSession } from "next-auth/react";
 
 export default function DashboardLayout({
   children,
@@ -17,41 +17,35 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const { data: session, status } = useSession();
+
   useEffect(() => {
-    async function checkSession() {
-      try {
-        // Get the session from NextAuth
-        const session = await auth();
-
-        if (!session || !session.user) {
-          router.push("/login");
-          return;
-        }
-
-        const userData = {
-          id: session.user.id as string,
-          name: session.user.name || "",
-          email: session.user.email || "",
-          role: session.user.role as "ADMIN" | "CLIENT",
-        };
-
-        setUser(userData);
-
-        // Redirect admin users to admin dashboard
-        if (userData.role === "ADMIN") {
-          router.push("/admin");
-          return;
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Error checking session:", error);
-        router.push("/login");
-      }
+    if (status === "loading") {
+      return;
     }
 
-    checkSession();
-  }, [router]);
+    if (status === "unauthenticated" || !session) {
+      router.push("/login");
+      return;
+    }
+
+    const userData = {
+      id: session.user?.id as string,
+      name: session.user?.name || "",
+      email: session.user?.email || "",
+      role: session.user?.role as "ADMIN" | "CLIENT",
+    };
+
+    setUser(userData);
+
+    // Redirect admin users to admin dashboard
+    if (userData.role === "ADMIN") {
+      router.push("/admin");
+      return;
+    }
+
+    setLoading(false);
+  }, [router, session, status]);
 
   if (loading) {
     return <Loading fullScreen message="Loading dashboard..." />;
