@@ -44,7 +44,7 @@ export interface TeamViewerDevice {
 }
 
 export interface TeamViewerSession {
-  id: string;
+  id?: string;
   code: string;
   description?: string;
   end_customer?: {
@@ -57,7 +57,14 @@ export interface TeamViewerSession {
   };
   state: 'Open' | 'Closed' | 'Waiting';
   created: string;
+  created_at?: string;
   end?: string;
+  valid_until?: string;
+  supporter_link?: string;
+  end_customer_link?: string;
+  webclient_supporter_link?: string;
+  groupid?: string;
+  online?: boolean;
 }
 
 // Mock data for development - will be replaced with real API calls
@@ -175,8 +182,7 @@ export async function createTeamViewerSession(deviceId: string): Promise<TeamVie
     // For real devices, make a real API call
     const token = await getTeamViewerToken();
 
-    console.log(`Creating TeamViewer session for device ${deviceId}...`);
-
+    // Use the main sessions API endpoint as discovered in our testing
     const response = await fetch(`https://webapi.teamviewer.com/api/v1/sessions`, {
       method: 'POST',
       headers: {
@@ -193,18 +199,34 @@ export async function createTeamViewerSession(deviceId: string): Promise<TeamVie
     });
 
     if (!response.ok) {
-      console.error('Failed to create TeamViewer session:', response.status, await response.text());
-      throw new Error(`Failed to create TeamViewer session: ${response.status}`);
+      const errorText = await response.text();
+      let errorMessage = `Failed to create TeamViewer session: ${response.status}`;
+
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = `${errorMessage} - ${errorData.error_description || errorData.error}`;
+      } catch (e) {
+        // If parsing fails, use the raw error text
+        errorMessage = `${errorMessage} - ${errorText}`;
+      }
+
+      console.error(errorMessage);
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
     console.log('TeamViewer session created:', data);
 
+    // Return the full session data with all the links and properties
     return {
-      id: data.id || `s${Math.random().toString(36).substring(2, 10)}`,
-      code: data.code || deviceId,
+      id: data.id,
+      code: data.code,
       state: data.state || 'Open',
-      created: data.created || new Date().toISOString()
+      created: data.created_at || new Date().toISOString(),
+      valid_until: data.valid_until,
+      supporter_link: data.supporter_link,
+      end_customer_link: data.end_customer_link,
+      webclient_supporter_link: data.webclient_supporter_link
     };
   } catch (error) {
     console.error(`Error creating TeamViewer session for device ${deviceId}:`, error);
@@ -227,25 +249,61 @@ export async function endTeamViewerSession(sessionId: string): Promise<TeamViewe
 
     console.log(`Ending TeamViewer session ${sessionId}...`);
 
-    // Make a real API call to end the session
+    // Use PUT method to update the session state to "Closed" as discovered in our testing
     const response = await fetch(`https://webapi.teamviewer.com/api/v1/sessions/${sessionId}`, {
-      method: 'DELETE',
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        state: 'Closed'
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = `Failed to end TeamViewer session: ${response.status}`;
+
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = `${errorMessage} - ${errorData.error_description || errorData.error}`;
+      } catch (e) {
+        // If parsing fails, use the raw error text
+        errorMessage = `${errorMessage} - ${errorText}`;
+      }
+
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    // Get the updated session details
+    const getResponse = await fetch(`https://webapi.teamviewer.com/api/v1/sessions/${sessionId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
 
-    if (!response.ok) {
-      console.error('Failed to end TeamViewer session:', response.status, await response.text());
-      throw new Error(`Failed to end TeamViewer session: ${response.status}`);
+    if (getResponse.ok) {
+      const sessionData = await getResponse.json();
+      console.log('TeamViewer session closed:', sessionData);
+      return {
+        id: sessionId,
+        code: sessionData.code || '',
+        state: 'Closed',
+        created: sessionData.created_at || new Date(Date.now() - 3600000).toISOString(),
+        end: new Date().toISOString(),
+        valid_until: sessionData.valid_until
+      };
     }
 
+    // Fallback if we can't get the updated session details
     return {
       id: sessionId,
       code: '',
       state: 'Closed',
-      created: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+      created: new Date(Date.now() - 3600000).toISOString(),
       end: new Date().toISOString()
     };
   } catch (error) {
