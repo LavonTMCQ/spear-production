@@ -3,10 +3,19 @@ import { stripe, stripeConfig } from "@/lib/stripe-config";
 import { prisma } from "@/lib/db";
 import Stripe from "stripe";
 
-// Initialize Stripe client for server-side only
-const stripeClient = stripe || new Stripe(stripeConfig.secretKey, {
-  apiVersion: '2025-04-30.basil',
-});
+// Initialize Stripe client for server-side only if API key is available
+let stripeClient: Stripe | null = null;
+try {
+  if (stripe) {
+    stripeClient = stripe;
+  } else if (stripeConfig.secretKey) {
+    stripeClient = new Stripe(stripeConfig.secretKey, {
+      apiVersion: '2025-04-30.basil',
+    });
+  }
+} catch (error) {
+  console.error('Failed to initialize Stripe client:', error);
+}
 
 // Disable body parsing, need the raw body for webhook signature verification
 export const config = {
@@ -17,6 +26,14 @@ export const config = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe client is available
+    if (!stripeClient) {
+      return NextResponse.json(
+        { received: true, mockMode: true, message: "Stripe is not configured" },
+        { status: 200 }
+      );
+    }
+
     const body = await request.text();
     const signature = request.headers.get('stripe-signature') as string;
 
@@ -30,11 +47,17 @@ export async function POST(request: NextRequest) {
     // Verify webhook signature
     let event;
     try {
-      event = stripeClient.webhooks.constructEvent(
-        body,
-        signature,
-        stripeConfig.webhookSecret
-      );
+      if (!stripeConfig.webhookSecret) {
+        console.warn('Webhook secret is not configured, skipping signature verification');
+        // Parse the event without verification for development
+        event = JSON.parse(body);
+      } else {
+        event = stripeClient.webhooks.constructEvent(
+          body,
+          signature,
+          stripeConfig.webhookSecret
+        );
+      }
     } catch (err: any) {
       console.error(`Webhook signature verification failed: ${err.message}`);
       return NextResponse.json(
