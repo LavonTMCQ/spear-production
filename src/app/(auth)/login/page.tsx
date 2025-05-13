@@ -12,7 +12,6 @@ import { VRTitleSection } from "@/components/dashboard/vr-title-section";
 import { motion } from "framer-motion";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { signIn } from "next-auth/react";
-import { auth } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,12 +63,19 @@ export default function LoginPage() {
     console.log("Submitting with email:", email, "and password:", password);
 
     try {
-      // Use NextAuth signIn function from next-auth/react
+      // Determine the callback URL based on the email
+      const callbackUrl = email === "quiseforeverphilly@gmail.com" ? "/admin" : "/dashboard";
+
+      // Use NextAuth signIn function with redirect
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false
+        callbackUrl,
+        redirect: true
       });
+
+      // Note: The code below won't execute if redirect is true
+      // It's only here as a fallback
 
       console.log("SignIn result:", result);
 
@@ -80,15 +86,10 @@ export default function LoginPage() {
         return;
       }
 
-      // Get the session to check the user role
-      const session = await auth();
-      console.log("Session after login:", session);
-
-      if (session?.user?.role === "ADMIN") {
-        console.log("Redirecting to admin dashboard");
+      // If we get here, redirect manually
+      if (email === "quiseforeverphilly@gmail.com") {
         router.push("/admin");
       } else {
-        console.log("Redirecting to client dashboard");
         router.push("/dashboard");
       }
     } catch (error) {
