@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { createServiceQueueSession, ServiceQueueSession } from "@/lib/teamviewer-service-queue";
+import { createServiceQueueSession, ServiceQueueSession, endServiceQueueSession } from "@/lib/teamviewer-service-queue";
+import { formatTeamViewerDeviceId } from "@/lib/teamviewer-api";
 
 interface TeamViewerServiceQueueProps {
   queueId: string;
@@ -17,8 +18,10 @@ export function TeamViewerServiceQueue({
   customFields,
 }: TeamViewerServiceQueueProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [session, setSession] = useState<ServiceQueueSession | null>(null);
   const [connectionUrl, setConnectionUrl] = useState<string | null>(null);
+  const [webClientUrl, setWebClientUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const createSession = async () => {
@@ -29,11 +32,32 @@ export function TeamViewerServiceQueue({
       const result = await createServiceQueueSession(queueId, customFields);
       setSession(result.session);
       setConnectionUrl(result.connectionUrl);
+      setWebClientUrl(result.webclientUrl || result.connectionUrl);
+      console.log('Session created:', result);
     } catch (err) {
-      console.error("Error creating service queue session:", err);
-      setError("Failed to create service queue session. Please try again.");
+      console.error("Error creating session:", err);
+      setError("Failed to create remote control session. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const closeSession = async () => {
+    if (!session) return;
+
+    setIsClosing(true);
+    setError(null);
+
+    try {
+      await endServiceQueueSession(session.id);
+      setSession(null);
+      setConnectionUrl(null);
+      setWebClientUrl(null);
+    } catch (err) {
+      console.error("Error closing session:", err);
+      setError("Failed to close session. It may have already expired.");
+    } finally {
+      setIsClosing(false);
     }
   };
 
@@ -76,16 +100,26 @@ export function TeamViewerServiceQueue({
                   onClick={() => {
                     if (!connectionUrl || !session?.code) return;
 
-                    // Format the device ID by removing spaces if present
-                    const formattedDeviceId = session.code.replace(/\s+/g, '');
+                    // Format the device ID using our utility function
+                    const formattedDeviceId = formatTeamViewerDeviceId(session.code);
+                    console.log(`Connecting to device with ID: ${formattedDeviceId}`);
 
-                    // Try to launch TeamViewer client first with the s= parameter
-                    window.location.href = `teamviewer10://control?s=${formattedDeviceId}`;
+                    // If we have a direct TeamViewer URL, use it
+                    if (connectionUrl.startsWith('teamviewer10://')) {
+                      console.log(`Using direct TeamViewer URL: ${connectionUrl}`);
+                      window.location.href = connectionUrl;
+                    } else {
+                      // Otherwise construct the URL with the formatted device ID
+                      console.log(`Using constructed TeamViewer URL with ID: ${formattedDeviceId}`);
+                      window.location.href = `teamviewer10://control?s=${formattedDeviceId}`;
+                    }
 
                     // Fallback to web client after a short delay
                     setTimeout(() => {
-                      window.open(connectionUrl, "_blank");
-                    }, 1000);
+                      const urlToOpen = webClientUrl || connectionUrl;
+                      console.log(`Opening web client fallback: ${urlToOpen}`);
+                      window.open(urlToOpen, "_blank");
+                    }, 1500);
                   }}
                   className="w-full"
                 >
@@ -96,7 +130,13 @@ export function TeamViewerServiceQueue({
                 </Button>
 
                 <Button
-                  onClick={() => connectionUrl && window.open(connectionUrl, "_blank")}
+                  onClick={() => {
+                    const urlToOpen = webClientUrl || connectionUrl;
+                    if (urlToOpen) {
+                      console.log(`Opening web client: ${urlToOpen}`);
+                      window.open(urlToOpen, "_blank");
+                    }
+                  }}
                   variant="outline"
                   className="w-full"
                 >
@@ -104,6 +144,30 @@ export function TeamViewerServiceQueue({
                     <path fillRule="evenodd" d="M15.75 2.25H21a.75.75 0 01.75.75v5.25a.75.75 0 01-1.5 0V4.81L8.03 17.03a.75.75 0 01-1.06-1.06L19.19 3.75h-3.44a.75.75 0 010-1.5zm-10.5 4.5a1.5 1.5 0 00-1.5 1.5v10.5a1.5 1.5 0 001.5 1.5h10.5a1.5 1.5 0 001.5-1.5V10.5a.75.75 0 011.5 0v8.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V8.25a3 3 0 013-3h8.25a.75.75 0 010 1.5H5.25z" clipRule="evenodd" />
                   </svg>
                   Open TeamViewer Web Client
+                </Button>
+
+                <Button
+                  onClick={closeSession}
+                  variant="destructive"
+                  disabled={isClosing}
+                  className="w-full"
+                >
+                  {isClosing ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Closing Session...
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-2">
+                        <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clipRule="evenodd" />
+                      </svg>
+                      End Session
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

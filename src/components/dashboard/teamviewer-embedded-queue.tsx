@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { createServiceQueueSession, ServiceQueueSession } from "@/lib/teamviewer-service-queue";
+import { createServiceQueueSession, ServiceQueueSession, endServiceQueueSession } from "@/lib/teamviewer-service-queue";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { formatTeamViewerDeviceId } from "@/lib/teamviewer-api";
 
 interface TeamViewerEmbeddedQueueProps {
   queueId: string;
@@ -18,9 +19,11 @@ export function TeamViewerEmbeddedQueue({
   customFields,
 }: TeamViewerEmbeddedQueueProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [session, setSession] = useState<ServiceQueueSession | null>(null);
   const [embeddedUrl, setEmbeddedUrl] = useState<string | null>(null);
   const [connectionUrl, setConnectionUrl] = useState<string | null>(null);
+  const [webClientUrl, setWebClientUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isEmbedded, setIsEmbedded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -33,14 +36,37 @@ export function TeamViewerEmbeddedQueue({
       const result = await createServiceQueueSession(queueId, customFields);
       setSession(result.session);
       setConnectionUrl(result.connectionUrl);
+      setWebClientUrl(result.webclientUrl || result.connectionUrl);
       setEmbeddedUrl(result.embeddedUrl);
       setIsEmbedded(true);
+      console.log('Session created:', result);
     } catch (err) {
-      console.error("Error creating service queue session:", err);
-      setError("Failed to create service queue session. Please try again.");
+      console.error("Error creating session:", err);
+      setError("Failed to create remote control session. Please try again.");
       setIsEmbedded(false);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const closeSession = async () => {
+    if (!session) return;
+
+    setIsClosing(true);
+    setError(null);
+
+    try {
+      await endServiceQueueSession(session.id);
+      setSession(null);
+      setConnectionUrl(null);
+      setWebClientUrl(null);
+      setEmbeddedUrl(null);
+      setIsEmbedded(false);
+    } catch (err) {
+      console.error("Error closing session:", err);
+      setError("Failed to close session. It may have already expired.");
+    } finally {
+      setIsClosing(false);
     }
   };
 
@@ -97,8 +123,11 @@ export function TeamViewerEmbeddedQueue({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    if (!connectionUrl) return;
-                    window.open(connectionUrl, "_blank");
+                    const urlToOpen = webClientUrl || connectionUrl;
+                    if (urlToOpen) {
+                      console.log(`Opening in new window: ${urlToOpen}`);
+                      window.open(urlToOpen, "_blank");
+                    }
                   }}
                   className="h-8 px-2 text-xs"
                 >
@@ -126,17 +155,28 @@ export function TeamViewerEmbeddedQueue({
               <Button
                 variant="outline"
                 onClick={() => {
-                  if (!connectionUrl) return;
+                  if (!connectionUrl || !session?.code) return;
 
-                  // Try to launch TeamViewer client first
-                  // Format the device ID by removing spaces if present
-                  const formattedDeviceId = session?.code.replace(/\s+/g, '');
-                  window.location.href = `teamviewer10://control?s=${formattedDeviceId}`;
+                  // Format the device ID using our utility function
+                  const formattedDeviceId = formatTeamViewerDeviceId(session.code);
+                  console.log(`Connecting to device with ID: ${formattedDeviceId}`);
+
+                  // If we have a direct TeamViewer URL, use it
+                  if (connectionUrl.startsWith('teamviewer10://')) {
+                    console.log(`Using direct TeamViewer URL: ${connectionUrl}`);
+                    window.location.href = connectionUrl;
+                  } else {
+                    // Otherwise construct the URL with the formatted device ID
+                    console.log(`Using constructed TeamViewer URL with ID: ${formattedDeviceId}`);
+                    window.location.href = `teamviewer10://control?s=${formattedDeviceId}`;
+                  }
 
                   // Fallback to web client after a short delay
                   setTimeout(() => {
-                    window.open(connectionUrl, "_blank");
-                  }, 1000);
+                    const urlToOpen = webClientUrl || connectionUrl;
+                    console.log(`Opening web client fallback: ${urlToOpen}`);
+                    window.open(urlToOpen, "_blank");
+                  }, 1500);
                 }}
                 className="flex-1"
               >
@@ -144,14 +184,10 @@ export function TeamViewerEmbeddedQueue({
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => {
-                  setSession(null);
-                  setEmbeddedUrl(null);
-                  setConnectionUrl(null);
-                  setIsEmbedded(false);
-                }}
+                onClick={closeSession}
+                disabled={isClosing}
               >
-                End Session
+                {isClosing ? "Closing..." : "End Session"}
               </Button>
             </div>
           </div>
