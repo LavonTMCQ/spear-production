@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { webScrapingAgent } from '@/lib/mastra';
+// import { webScrapingAgent } from '@/lib/mastra';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validate required fields
     if (!body.url) {
       return NextResponse.json(
@@ -12,30 +12,20 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
-    // Use the web scraping agent to scrape the URL
-    const result = await webScrapingAgent.generate(`Scrape the content from ${body.url}${body.selector ? ` using the selector "${body.selector}"` : ''}`);
-    
-    // Extract tool results
-    const toolResults = result.toolCalls?.map(call => ({
-      tool: call.name,
-      args: call.args,
-      result: call.result,
-    })) || [];
-    
-    // Find the scrape result
-    const scrapeResult = toolResults.find(result => result.tool === 'scrapeWebsite');
-    
-    if (!scrapeResult) {
-      return NextResponse.json(
-        { error: 'Failed to scrape the URL', message: result.text },
-        { status: 500 }
-      );
-    }
-    
+
+    // Placeholder response for web scraping
+    // This feature is not implemented yet
     return NextResponse.json({
-      result: scrapeResult.result,
-      analysis: result.text,
+      result: {
+        title: `Content from ${body.url}`,
+        content: `This is a placeholder for scraped content from ${body.url}. Web scraping functionality is not implemented yet.`,
+        metadata: {
+          url: body.url,
+          scrapedAt: new Date().toISOString(),
+          selector: body.selector || 'body',
+        }
+      },
+      analysis: 'Web scraping analysis is not implemented yet.',
     });
   } catch (error) {
     console.error('Error scraping URL:', error);
