@@ -5,8 +5,8 @@ import { redirect, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NotificationProvider } from "@/contexts/notification-context";
 import { User } from "@/types/user";
-import { getUserFromStorage } from "@/utils/storage-utils";
 import { Loading } from "@/components/ui/loading";
+import { auth } from "@/lib/auth";
 
 export default function DashboardLayout({
   children,
@@ -18,23 +18,39 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in
-    const userData = getUserFromStorage();
+    async function checkSession() {
+      try {
+        // Get the session from NextAuth
+        const session = await auth();
 
-    if (!userData) {
-      router.push("/login");
-      return;
+        if (!session || !session.user) {
+          router.push("/login");
+          return;
+        }
+
+        const userData = {
+          id: session.user.id as string,
+          name: session.user.name || "",
+          email: session.user.email || "",
+          role: session.user.role as "ADMIN" | "CLIENT",
+        };
+
+        setUser(userData);
+
+        // Redirect admin users to admin dashboard
+        if (userData.role === "ADMIN") {
+          router.push("/admin");
+          return;
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error checking session:", error);
+        router.push("/login");
+      }
     }
 
-    setUser(userData);
-
-    // Redirect admin users to admin dashboard
-    if (userData.role === "ADMIN") {
-      router.push("/admin");
-      return;
-    }
-
-    setLoading(false);
+    checkSession();
   }, [router]);
 
   if (loading) {

@@ -11,8 +11,7 @@ import { Label } from "@/components/ui/label";
 import { VRTitleSection } from "@/components/dashboard/vr-title-section";
 import { motion } from "framer-motion";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
-import { saveUserToStorage } from "@/utils/storage-utils";
-import { User } from "@/types/user";
+import { signIn } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,33 +26,22 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Simple login logic for testing
-      if (email === "admin@example.com" && password === "password") {
-        const adminUser: User = {
-          id: "1",
-          name: "Admin User",
-          email: "admin@example.com",
-          role: "ADMIN"
-        };
+      // Use NextAuth signIn function
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-        // Store in localStorage for demo purposes
-        saveUserToStorage(adminUser);
-        router.push("/admin");
-      } else if (email === "client@example.com" && password === "password") {
-        const clientUser: User = {
-          id: "2",
-          name: "Client User",
-          email: "client@example.com",
-          role: "CLIENT"
-        };
-
-        // Store in localStorage for demo purposes
-        saveUserToStorage(clientUser);
-        router.push("/dashboard");
-      } else {
+      if (result?.error) {
         setError("Invalid email or password");
         setIsLoading(false);
+        return;
       }
+
+      // Redirect based on user role
+      // We'll check the session on the dashboard pages to determine the role
+      router.push("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       setError("An error occurred. Please try again.");
@@ -132,11 +120,15 @@ export default function LoginPage() {
                   <div className="space-y-1.5">
                     <div className="flex items-center">
                       <span className="w-16 font-medium">Admin:</span>
-                      <span className="text-slate-300">admin@example.com / password</span>
+                      <span className="text-slate-300">quiseforeverphilly@gmail.com / password</span>
                     </div>
                     <div className="flex items-center">
                       <span className="w-16 font-medium">Client:</span>
                       <span className="text-slate-300">client@example.com / password</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="w-16 font-medium">Test:</span>
+                      <span className="text-slate-300">admin@example.com / password</span>
                     </div>
                   </div>
                 </div>
@@ -168,7 +160,7 @@ export default function LoginPage() {
                     size="sm"
                     className="flex-1 h-10 text-sm border-slate-700 text-slate-200 hover:text-white hover:bg-slate-800"
                     onClick={() => {
-                      setEmail("admin@example.com");
+                      setEmail("quiseforeverphilly@gmail.com");
                       setPassword("password");
                     }}
                   >
