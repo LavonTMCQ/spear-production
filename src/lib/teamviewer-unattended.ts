@@ -144,8 +144,34 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
     const formattedDeviceId = formatTeamViewerDeviceId(device.deviceId);
     console.log('Formatted device ID for connection:', formattedDeviceId);
 
-    // Always use the main sessions API endpoint as discovered in our testing
-    console.log('Creating session for device connection...');
+    // Check if this is your Android device that supports unattended access
+    const isYourAndroidDevice =
+      (device.deviceId === 'r579487224' ||
+       device.deviceId === '579487224' ||
+       device.id === 'd1645844505');
+
+    if (isYourAndroidDevice || device.supportsUnattended) {
+      console.log('Device supports unattended access, using direct connection...');
+
+      // For unattended access, we connect directly to the device using its ID
+      // This is the key difference - we don't create a session, we connect directly
+      const formattedRemoteId = formatTeamViewerDeviceId(device.deviceId);
+
+      console.log(`Using unattended access for device ${device.name} with ID: ${formattedRemoteId}`);
+
+      // For unattended access, we don't need a session
+      // We just return the direct connection information
+      return {
+        deviceId: formattedRemoteId,
+        password: '', // No password needed for unattended access
+        connectionUrl: `teamviewer10://control?s=${formattedRemoteId}`,
+        webClientUrl: `https://start.teamviewer.com/${formattedRemoteId}`,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours by default
+      };
+    }
+
+    // For devices that don't support unattended access, create a session
+    console.log('Device does not support unattended access, creating session...');
 
     try {
       // Use the main sessions API endpoint

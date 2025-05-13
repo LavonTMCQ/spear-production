@@ -146,18 +146,24 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
 
       // Show guidance message
       if (device.supportsUnattended) {
-        alert(`Connecting to unattended device ${device.name} (ID: ${formattedDeviceId}). TeamViewer should open automatically.`);
+        alert(`Connecting to unattended device ${device.name} (ID: ${formattedDeviceId}) in Host mode. TeamViewer should open automatically and connect without requiring acceptance on the device.`);
       } else {
         alert(`Connecting to device ${device.name} (ID: ${formattedDeviceId}). TeamViewer should open automatically. You will need to accept the connection on the device.`);
       }
 
-      // Try to launch TeamViewer client first using the supporter_link if available
-      if (result.connectionUrl && result.connectionUrl.startsWith('teamviewer')) {
-        // Direct TeamViewer URL
-        console.log(`Launching TeamViewer with URL: ${result.connectionUrl}`);
+      // For unattended access (Host mode), we use a direct connection to the device ID
+      if (device.supportsUnattended) {
+        // Direct connection to the device using its ID
+        console.log(`Launching TeamViewer with direct connection to device ID: ${formattedDeviceId}`);
+        window.location.href = `teamviewer10://control?s=${formattedDeviceId}`;
+      }
+      // For session-based connections (Quick Support mode)
+      else if (result.connectionUrl && result.connectionUrl.startsWith('teamviewer')) {
+        // Direct TeamViewer URL from session
+        console.log(`Launching TeamViewer with session URL: ${result.connectionUrl}`);
         window.location.href = result.connectionUrl;
       } else if (result.password) {
-        // If we have a password (unattended access), use it
+        // If we have a password, use it
         console.log(`Launching TeamViewer with ID: ${formattedDeviceId} and password`);
         window.location.href = `teamviewer10://control?s=${formattedDeviceId}&p=${result.password}`;
       } else {
