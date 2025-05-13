@@ -65,7 +65,9 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
       }
 
       // Format the device ID using our utility function
-      const formattedDeviceId = result.deviceId;
+      const formattedDeviceId = formatTeamViewerDeviceId(result.deviceId);
+
+      console.log(`Connection result device ID: ${result.deviceId}, formatted: ${formattedDeviceId}`);
 
       // Show guidance message
       if (device.supportsUnattended) {

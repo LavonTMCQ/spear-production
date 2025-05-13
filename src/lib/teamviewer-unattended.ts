@@ -150,15 +150,19 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
         // For your specific Android device, use a different API endpoint
         // This is a workaround for devices that support unattended access but need a different API call
         const isYourAndroidDevice =
-          (device.deviceId === '579487224' ||
+          (device.deviceId === 'r579487224' ||
+           device.deviceId === '579487224' ||
            device.id === 'd1645844505');
 
-        let endpoint = `https://webapi.teamviewer.com/api/v1/devices/${deviceId}/sessions`;
+        // Use the main sessions API endpoint instead of the device-specific one
+        // This is because the device-specific endpoint is returning 404
+        let endpoint = 'https://webapi.teamviewer.com/api/v1/sessions';
         let requestBody = {
+          groupname: 'Spear Remote Control',
+          description: 'Remote access from Spear',
           end_customer: {
             name: 'Spear User',
-          },
-          description: 'Remote access from Spear'
+          }
         };
 
         console.log(`Creating unattended session for device ${deviceId} (${device.deviceId})...`);
@@ -174,12 +178,19 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
 
         if (response.ok) {
           const data = await response.json();
-          console.log('TeamViewer unattended session created:', data);
+          console.log('TeamViewer session created:', data);
+
+          // For the general sessions API, we need to extract the code (which is the TeamViewer ID)
+          // If we don't have a code, fall back to the device's formatted ID
+          const sessionDeviceId = data.code || formattedDeviceId;
+          const sessionPassword = data.password || '';
+
+          console.log(`Session created with device ID: ${sessionDeviceId} and password: ${sessionPassword ? 'Yes' : 'No'}`);
 
           return {
-            deviceId: formattedDeviceId,
-            password: data.password || '',
-            connectionUrl: `https://start.teamviewer.com/${formattedDeviceId}${data.password ? `?password=${data.password}` : ''}`,
+            deviceId: sessionDeviceId,
+            password: sessionPassword,
+            connectionUrl: `https://start.teamviewer.com/${sessionDeviceId}${sessionPassword ? `?password=${sessionPassword}` : ''}`,
             expiresAt: data.valid_until || new Date(Date.now() + 5 * 60 * 1000).toISOString()
           };
         } else {
@@ -198,9 +209,49 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
     console.log('Using direct connection for device:', formattedDeviceId);
 
     // For direct connection, we don't need a password as the user will need to accept the connection
-    // But we'll generate one for the URL structure
     const directPassword = '';
 
+    // Try to create a direct connection session using the main API
+    try {
+      const directEndpoint = 'https://webapi.teamviewer.com/api/v1/sessions';
+      const directRequestBody = {
+        groupname: 'Spear Direct Connection',
+        description: 'Direct connection from Spear',
+        end_customer: {
+          name: 'Spear User',
+        }
+      };
+
+      console.log(`Creating direct connection session for device ${formattedDeviceId}...`);
+
+      const directResponse = await fetch(directEndpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(directRequestBody)
+      });
+
+      if (directResponse.ok) {
+        const directData = await directResponse.json();
+        console.log('TeamViewer direct session created:', directData);
+
+        // Use the code from the response if available, otherwise use the formatted device ID
+        const directSessionId = directData.code || formattedDeviceId;
+
+        return {
+          deviceId: directSessionId,
+          password: '',
+          connectionUrl: `https://start.teamviewer.com/${directSessionId}`,
+          expiresAt: directData.valid_until || new Date(Date.now() + 5 * 60 * 1000).toISOString()
+        };
+      }
+    } catch (directError) {
+      console.error('Error creating direct connection session:', directError);
+    }
+
+    // Fallback to basic direct connection if the API call fails
     return {
       deviceId: formattedDeviceId,
       password: directPassword,
