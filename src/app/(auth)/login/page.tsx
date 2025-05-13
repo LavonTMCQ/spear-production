@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,28 +11,64 @@ import { Label } from "@/components/ui/label";
 import { VRTitleSection } from "@/components/dashboard/vr-title-section";
 import { motion } from "framer-motion";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
-import { signIn } from "@/lib/auth";
+import { signIn } from "next-auth/react";
+import { auth } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formState, setFormState] = useState({
+    email: "",
+    password: ""
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Use this function to update form state
+  const updateFormState = (field, value) => {
+    setFormState(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Fill admin credentials
+  const fillAdminCredentials = () => {
+    setFormState({
+      email: "quiseforeverphilly@gmail.com",
+      password: "password"
+    });
+    console.log("Admin credentials filled:", {
+      email: "quiseforeverphilly@gmail.com",
+      password: "password"
+    });
+  };
+
+  // Fill client credentials
+  const fillClientCredentials = () => {
+    setFormState({
+      email: "client@example.com",
+      password: "password"
+    });
+    console.log("Client credentials filled:", {
+      email: "client@example.com",
+      password: "password"
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
+    const { email, password } = formState;
     console.log("Submitting with email:", email, "and password:", password);
 
     try {
-      // Use NextAuth signIn function
+      // Use NextAuth signIn function from next-auth/react
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false,
+        redirect: false
       });
 
       console.log("SignIn result:", result);
@@ -111,8 +147,8 @@ export default function LoginPage() {
                     id="email"
                     type="email"
                     placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formState.email}
+                    onChange={(e) => updateFormState('email', e.target.value)}
                     required
                     className="bg-slate-800/50 border-slate-700 text-white"
                   />
@@ -122,8 +158,8 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formState.password}
+                    onChange={(e) => updateFormState('password', e.target.value)}
                     required
                     className="bg-slate-800/50 border-slate-700 text-white"
                   />
@@ -160,10 +196,7 @@ export default function LoginPage() {
                     variant="outline"
                     size="sm"
                     className="flex-1 h-10 text-sm border-slate-700 text-slate-200 hover:text-white hover:bg-slate-800"
-                    onClick={() => {
-                      setEmail("client@example.com");
-                      setPassword("password");
-                    }}
+                    onClick={fillClientCredentials}
                   >
                     Fill Client
                   </Button>
@@ -172,16 +205,7 @@ export default function LoginPage() {
                     variant="outline"
                     size="sm"
                     className="flex-1 h-10 text-sm border-slate-700 text-slate-200 hover:text-white hover:bg-slate-800"
-                    onClick={() => {
-                      console.log("Fill Admin button clicked");
-                      setEmail("quiseforeverphilly@gmail.com");
-                      setPassword("password");
-                      console.log("After setting - Email:", "quiseforeverphilly@gmail.com", "Password:", "password");
-                      // Small delay to ensure state is updated
-                      setTimeout(() => {
-                        console.log("After timeout - Email:", email, "Password:", password);
-                      }, 100);
-                    }}
+                    onClick={fillAdminCredentials}
                   >
                     Fill Admin
                   </Button>
