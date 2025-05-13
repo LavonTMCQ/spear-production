@@ -167,20 +167,26 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
       const deviceType = 'Mobile';
 
       // Create the proper web client URL for unattended access (Host mode)
-      const webClientUrl = `https://web.teamviewer.com/Connect?uiMode=OneUI&lng=en&TabMode=MultiTabUI&machineId=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
+      // This is the format that works with the official TeamViewer web client
+      const webClientUrl = `https://web.teamviewer.com/Connect?uiMode=OneUI&lng=en&TabMode=MultiTabUI&backgroundTabID=${Math.floor(Math.random() * 10000000000000000)}&machineId=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
 
       // Create the proper direct connection URL for unattended access (Host mode)
-      const connectionUrl = `teamviewer10://control?s=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
+      // We'll prioritize the web client URL since it's more reliable
+      const connectionUrl = webClientUrl;
 
       console.log(`Created unattended access URLs for device ${deviceName}:`);
       console.log(`- Web client URL: ${webClientUrl}`);
-      console.log(`- Direct connection URL: ${connectionUrl}`);
+
+      // Also create a backup native app URL in case the user has TeamViewer installed
+      const nativeAppUrl = `teamviewer10://control?s=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
+      console.log(`- Native app URL (backup): ${nativeAppUrl}`);
 
       return {
         deviceId: formattedRemoteId,
         password: '', // No password needed for unattended access
-        connectionUrl: connectionUrl,
+        connectionUrl: connectionUrl, // Use web client URL as primary connection method
         webClientUrl: webClientUrl,
+        nativeAppUrl: nativeAppUrl, // Add native app URL as a backup
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours by default
       };
     }

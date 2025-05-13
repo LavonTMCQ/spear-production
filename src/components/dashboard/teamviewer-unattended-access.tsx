@@ -146,50 +146,55 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
 
       // Show guidance message
       if (device.supportsUnattended) {
-        alert(`Connecting to unattended device ${device.name} (ID: ${formattedDeviceId}) in Host mode. TeamViewer should open automatically and connect without requiring acceptance on the device.`);
+        alert(`Connecting to unattended device ${device.name} (ID: ${formattedDeviceId}) in Host mode. The TeamViewer web client will open and connect to your device without requiring acceptance on the device. Please wait while the connection is established.`);
       } else {
         alert(`Connecting to device ${device.name} (ID: ${formattedDeviceId}). TeamViewer should open automatically. You will need to accept the connection on the device.`);
       }
 
-      // Use the connection URL provided by the connectToUnattendedDevice function
-      // This will use the correct URL format for either Host mode or Quick Support mode
+      // For unattended access (Host mode), we'll open the web client URL directly
+      // This is more reliable than trying to use the teamviewer10:// protocol
+      if (device.supportsUnattended && result.webClientUrl) {
+        console.log(`Opening TeamViewer web client for unattended access: ${result.webClientUrl}`);
+        // Open in the same window to ensure proper authentication
+        window.location.href = result.webClientUrl;
+        return; // Exit early to prevent fallback
+      }
+
+      // For session-based connections (Quick Support mode)
       if (result.connectionUrl) {
         console.log(`Launching TeamViewer with connection URL: ${result.connectionUrl}`);
         window.location.href = result.connectionUrl;
       }
-      // Fallback for session-based connections (Quick Support mode)
+      // Fallback for session-based connections with password
       else if (result.password) {
-        // If we have a password, use it
         console.log(`Launching TeamViewer with ID: ${formattedDeviceId} and password`);
         window.location.href = `teamviewer10://control?s=${formattedDeviceId}&p=${result.password}`;
-      } else {
-        // For direct connection without password (basic fallback)
+      }
+      // Last resort fallback
+      else {
         console.log(`Launching TeamViewer with ID: ${formattedDeviceId} (direct connection)`);
         window.location.href = `teamviewer10://control?s=${formattedDeviceId}`;
       }
 
-      // Fallback to web client after a short delay
-      setTimeout(() => {
-        // Use the web client URL if available
-        if (result.webClientUrl) {
-          console.log(`Opening web client fallback: ${result.webClientUrl}`);
-          window.open(result.webClientUrl, '_blank');
-        }
-        // If no web client URL is available, try to construct one
-        else if (device.supportsUnattended) {
-          // For unattended access (Host mode), use the proper web client URL format
-          const deviceName = device.name || 'Android Device';
-          const webUrl = `https://web.teamviewer.com/Connect?uiMode=OneUI&lng=en&TabMode=MultiTabUI&machineId=${formattedDeviceId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=Mobile&connectByKnownDeviceMode=RemoteControl`;
-          console.log(`Opening constructed web client fallback for unattended access: ${webUrl}`);
-          window.open(webUrl, '_blank');
-        }
-        // For session-based connections (Quick Support mode)
-        else {
-          const webUrl = `https://start.teamviewer.com/${formattedDeviceId}`;
-          console.log(`Opening basic web client fallback: ${webUrl}`);
-          window.open(webUrl, '_blank');
-        }
-      }, 1500);
+      // We've already handled the primary connection method above
+      // This fallback is only needed for non-unattended devices or if the primary method fails
+
+      // Only add fallback for non-unattended devices (since we already opened the web client for unattended devices)
+      if (!device.supportsUnattended) {
+        setTimeout(() => {
+          // Use the web client URL if available
+          if (result.webClientUrl) {
+            console.log(`Opening web client fallback: ${result.webClientUrl}`);
+            window.open(result.webClientUrl, '_blank');
+          }
+          // For session-based connections (Quick Support mode)
+          else {
+            const webUrl = `https://start.teamviewer.com/${formattedDeviceId}`;
+            console.log(`Opening basic web client fallback: ${webUrl}`);
+            window.open(webUrl, '_blank');
+          }
+        }, 1500);
+      }
 
       // Notify parent component if callback provided
       if (onDeviceConnect) {
