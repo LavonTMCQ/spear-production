@@ -18,6 +18,7 @@ export interface TeamViewerUnattendedDevice {
   online: boolean;
   lastSeen?: string;
   alias?: string;
+  supportsUnattended?: boolean;
   deviceInfo?: {
     model?: string;
     manufacturer?: string;
@@ -61,6 +62,14 @@ export async function getUnattendedDevices(): Promise<TeamViewerUnattendedDevice
     const data = await response.json();
     console.log('TeamViewer devices response:', data);
 
+    // Log the raw device data for debugging
+    if (data.devices && data.devices.length > 0) {
+      console.log('Raw device data from TeamViewer API:');
+      data.devices.forEach((device: any, index: number) => {
+        console.log(`Device ${index + 1}:`, JSON.stringify(device, null, 2));
+      });
+    }
+
     // Process all devices, not just those with unattended access
     if (data.devices && data.devices.length > 0) {
       // Map the API response to our interface
@@ -73,6 +82,7 @@ export async function getUnattendedDevices(): Promise<TeamViewerUnattendedDevice
         online: device.online_state === 'online',
         lastSeen: device.last_seen,
         alias: device.alias,
+        supportsUnattended: device.policy?.unattended_access === true,
         deviceInfo: {
           model: device.device_info?.model,
           manufacturer: device.device_info?.manufacturer,
@@ -104,7 +114,7 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
     // Get a real API token
     const token = await getTeamViewerToken();
 
-    console.log(`Connecting to unattended device ${deviceId}...`);
+    console.log(`Connecting to device ${deviceId}...`);
 
     // Get the device details
     const devices = await getUnattendedDevices();
@@ -114,54 +124,67 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
       throw new Error(`Device with ID ${deviceId} not found`);
     }
 
-    // For direct connection to your device
-    // Format the device ID
+    console.log('Found device:', device);
+
+    // Format the device ID - use the remotecontrol_id directly
+    // This is the ID that appears in the TeamViewer client (9-digit number)
     const formattedDeviceId = formatTeamViewerDeviceId(device.deviceId);
+    console.log('Formatted device ID for connection:', formattedDeviceId);
 
-    // Create a session using the TeamViewer API
-    const response = await fetch(`https://webapi.teamviewer.com/api/v1/devices/${deviceId}/sessions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        end_customer: {
-          name: 'Spear User',
-        },
-        description: 'Remote access from Spear'
-      })
-    });
+    // Check if device supports unattended access
+    if (device.supportsUnattended) {
+      console.log('Device supports unattended access, creating session...');
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Failed to create session:', response.status, errorText);
+      // Try to create an unattended session
+      try {
+        const response = await fetch(`https://webapi.teamviewer.com/api/v1/devices/${deviceId}/sessions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            end_customer: {
+              name: 'Spear User',
+            },
+            description: 'Remote access from Spear'
+          })
+        });
 
-      // If the device doesn't support unattended access, try direct connection
-      console.log('Attempting direct connection without session creation');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('TeamViewer unattended session created:', data);
 
-      // Generate a random password for direct connection
-      // Note: This won't actually work for authentication, but we need to provide something
-      // The user will need to accept the connection on the device
-      const directPassword = Math.random().toString(36).substring(2, 10);
-
-      return {
-        deviceId: formattedDeviceId,
-        password: directPassword,
-        connectionUrl: `https://start.teamviewer.com/${formattedDeviceId}`,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString() // Expires in 5 minutes
-      };
+          return {
+            deviceId: formattedDeviceId,
+            password: data.password || '',
+            connectionUrl: `https://start.teamviewer.com/${formattedDeviceId}${data.password ? `?password=${data.password}` : ''}`,
+            expiresAt: data.valid_until || new Date(Date.now() + 5 * 60 * 1000).toISOString()
+          };
+        } else {
+          const errorText = await response.text();
+          console.error('Failed to create unattended session:', response.status, errorText);
+          // Fall through to direct connection
+        }
+      } catch (error) {
+        console.error('Error creating unattended session:', error);
+        // Fall through to direct connection
+      }
     }
 
-    const data = await response.json();
-    console.log('TeamViewer session created:', data);
+    // For Android devices or devices that don't support unattended access,
+    // we'll use direct connection (user will need to accept on the device)
+    console.log('Using direct connection for device:', formattedDeviceId);
 
-    // Use the session data for connection
+    // For direct connection, we don't need a password as the user will need to accept the connection
+    // But we'll generate one for the URL structure
+    const directPassword = '';
+
     return {
       deviceId: formattedDeviceId,
-      password: data.password || '',
-      connectionUrl: `https://start.teamviewer.com/${formattedDeviceId}${data.password ? `?password=${data.password}` : ''}`,
-      expiresAt: data.valid_until || new Date(Date.now() + 5 * 60 * 1000).toISOString()
+      password: directPassword,
+      connectionUrl: `https://start.teamviewer.com/${formattedDeviceId}`,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString() // Expires in 5 minutes
     };
   } catch (error) {
     console.error(`Error connecting to TeamViewer device ${deviceId}:`, error);

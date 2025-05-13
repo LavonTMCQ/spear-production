@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { 
-  getUnattendedDevices, 
+import {
+  getUnattendedDevices,
   TeamViewerUnattendedDevice,
   connectToUnattendedDevice
 } from "@/lib/teamviewer-unattended";
@@ -47,30 +47,44 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
     fetchDevices();
   }, []);
 
-  // Connect to an unattended device
+  // Connect to a device
   const handleConnectToDevice = async (device: TeamViewerUnattendedDevice) => {
     setSelectedDevice(device);
     setIsConnecting(true);
     setError(null);
 
     try {
+      console.log(`Connecting to device: ${device.name} (ID: ${device.id}, Remote ID: ${device.deviceId})`);
       const result = await connectToUnattendedDevice(device.id);
-      
+
       // Format the device ID by removing spaces if present
-      const formattedDeviceId = device.deviceId.replace(/\s+/g, '');
-      
+      const formattedDeviceId = result.deviceId.replace(/\s+/g, '');
+
       // Show guidance message
-      alert(`Connecting to unattended device ${device.name} (ID: ${device.deviceId}). TeamViewer should open automatically.`);
-      
-      // Try to launch TeamViewer client first with the s= parameter and password
-      window.location.href = `teamviewer10://control?s=${formattedDeviceId}&p=${result.password}`;
+      if (device.supportsUnattended) {
+        alert(`Connecting to unattended device ${device.name} (ID: ${formattedDeviceId}). TeamViewer should open automatically.`);
+      } else {
+        alert(`Connecting to device ${device.name} (ID: ${formattedDeviceId}). TeamViewer should open automatically. You will need to accept the connection on the device.`);
+      }
+
+      // Try to launch TeamViewer client first
+      if (result.password) {
+        // If we have a password (unattended access), use it
+        console.log(`Launching TeamViewer with ID: ${formattedDeviceId} and password`);
+        window.location.href = `teamviewer10://control?s=${formattedDeviceId}&p=${result.password}`;
+      } else {
+        // For direct connection without password
+        console.log(`Launching TeamViewer with ID: ${formattedDeviceId} (direct connection)`);
+        window.location.href = `teamviewer10://control?s=${formattedDeviceId}`;
+      }
 
       // Fallback to web client after a short delay
       setTimeout(() => {
-        // For web client, we use the direct URL format
-        window.open(`https://start.teamviewer.com/${formattedDeviceId}?password=${result.password}`, '_blank');
+        // For web client, use the connection URL from the result
+        console.log(`Opening web client fallback: ${result.connectionUrl}`);
+        window.open(result.connectionUrl, '_blank');
       }, 1500);
-      
+
       // Notify parent component if callback provided
       if (onDeviceConnect) {
         onDeviceConnect(device.deviceId, device.name);
@@ -85,27 +99,44 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
 
   // Connect to a device manually using ID and password
   const handleManualConnect = () => {
-    if (!manualDeviceId.trim() || !manualPassword.trim()) return;
-    
+    if (!manualDeviceId.trim()) return;
+
     setIsConnecting(true);
     setError(null);
 
     try {
       // Format the device ID by removing spaces if present
       const formattedDeviceId = manualDeviceId.replace(/\s+/g, '');
-      
+
       // Show guidance message
-      alert(`Connecting to unattended device with ID: ${manualDeviceId}. TeamViewer should open automatically.`);
-      
-      // Try to launch TeamViewer client first with the s= parameter and password
-      window.location.href = `teamviewer10://control?s=${formattedDeviceId}&p=${manualPassword}`;
+      if (manualPassword.trim()) {
+        alert(`Connecting to device with ID: ${formattedDeviceId} using provided password. TeamViewer should open automatically.`);
+      } else {
+        alert(`Connecting to device with ID: ${formattedDeviceId}. You will need to accept the connection on the device. TeamViewer should open automatically.`);
+      }
+
+      // Try to launch TeamViewer client first
+      if (manualPassword.trim()) {
+        // If password is provided, use it
+        console.log(`Launching TeamViewer with ID: ${formattedDeviceId} and password`);
+        window.location.href = `teamviewer10://control?s=${formattedDeviceId}&p=${manualPassword}`;
+      } else {
+        // For direct connection without password
+        console.log(`Launching TeamViewer with ID: ${formattedDeviceId} (direct connection)`);
+        window.location.href = `teamviewer10://control?s=${formattedDeviceId}`;
+      }
 
       // Fallback to web client after a short delay
       setTimeout(() => {
-        // For web client, we use the direct URL format
-        window.open(`https://start.teamviewer.com/${formattedDeviceId}?password=${manualPassword}`, '_blank');
+        // For web client, use the appropriate URL format
+        const webUrl = manualPassword.trim()
+          ? `https://start.teamviewer.com/${formattedDeviceId}?password=${manualPassword}`
+          : `https://start.teamviewer.com/${formattedDeviceId}`;
+
+        console.log(`Opening web client fallback: ${webUrl}`);
+        window.open(webUrl, '_blank');
       }, 1500);
-      
+
       // Notify parent component if callback provided
       if (onDeviceConnect) {
         onDeviceConnect(manualDeviceId, "Manual Device");
@@ -135,16 +166,16 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
           <div>
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-sm font-medium">Your Unattended Devices</h3>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={fetchDevices}
                 disabled={isLoading}
               >
                 {isLoading ? "Loading..." : "Refresh"}
               </Button>
             </div>
-            
+
             {devices.length === 0 ? (
               <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-md text-center">
                 <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -154,7 +185,7 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
             ) : (
               <div className="space-y-2">
                 {devices.map((device) => (
-                  <div 
+                  <div
                     key={device.id}
                     className="p-3 border rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                     onClick={() => handleConnectToDevice(device)}
@@ -164,8 +195,8 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
                         <h4 className="font-medium">{device.name}</h4>
                         <p className="text-xs text-slate-500 font-mono">ID: {device.deviceId}</p>
                       </div>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         disabled={isConnecting && selectedDevice?.id === device.id}
                       >
                         {isConnecting && selectedDevice?.id === device.id ? "Connecting..." : "Connect"}
@@ -212,11 +243,14 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
               </div>
               <Button
                 onClick={handleManualConnect}
-                disabled={isConnecting || !manualDeviceId.trim() || !manualPassword.trim()}
+                disabled={isConnecting || !manualDeviceId.trim()}
                 className="w-full"
               >
                 {isConnecting ? "Connecting..." : "Connect to Device"}
               </Button>
+              <p className="text-xs text-slate-500 mt-1">
+                Note: Password is optional. If not provided, you'll need to accept the connection on the device.
+              </p>
             </div>
           </div>
 
