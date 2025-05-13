@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  role      Role     @default(CLIENT)
+  devices   Device[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Device model
+model Device {
+  id                 String    @id @default(uuid())
+  name               String
+  teamViewerDeviceId String    @unique
+  assignedTo         User?     @relation(fields: [userId], references: [id])
+  userId             String?
+  lastCheckIn        CheckIn?  @relation("LastCheckIn", fields: [lastCheckInId], references: [id])
+  lastCheckInId      String?   @unique
+  checkIns           CheckIn[] @relation("DeviceCheckIns")
+}
+
+// Role enum
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+// CheckIn model
+model CheckIn {
+  id             String   @id @default(uuid())
+  device         Device   @relation("DeviceCheckIns", fields: [deviceId], references: [id])
+  deviceId       String
+  lastCheckInFor Device?  @relation("LastCheckIn")
+  latitude       Float
+  longitude      Float
+  createdAt      DateTime @default(now())
+}
+
+// Connection model
+model Connection {
+  id        String   @id @default(uuid())
+  deviceId  String
+  userId    String
+  startTime DateTime @default(now())
+  endTime   DateTime?
+  duration  Int?     // Duration in seconds
+  status    ConnectionStatus @default(ACTIVE)
+}
+
+// ConnectionStatus enum
+enum ConnectionStatus {
+  ACTIVE
+  COMPLETED
+  FAILED
+}
