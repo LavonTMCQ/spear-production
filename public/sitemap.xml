@@ -2,133 +2,133 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://spear-app.vercel.app/</loc>
-    <lastmod>2025-05-13T01:32:08.383Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.491Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/login</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/dashboard</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/dashboard/devices</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/dashboard/profile</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/dashboard/recordings</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/dashboard/subscription</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/admin</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/admin/clients</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/admin/devices</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/admin/integrations</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/admin/profile</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/admin/remote-control</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/admin/settings</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/admin/subscriptions</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/admin/unattended-access</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/blog</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/faq</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/help</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/knowledge-base</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/learn-more</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spear-app.vercel.app/subscription</loc>
-    <lastmod>2025-05-13T01:32:08.384Z</lastmod>
+    <lastmod>2025-05-13T08:27:04.493Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

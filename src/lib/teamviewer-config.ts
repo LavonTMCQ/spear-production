@@ -52,15 +52,6 @@ export function getTeamViewerConfig() {
 }
 
 /**
- * Get the TeamViewer API configuration
- *
- * @returns TeamViewer API configuration object
- */
-export function getTeamViewerConfig() {
-  return teamViewerConfig;
-}
-
-/**
  * Check if TeamViewer API is configured
  *
  * @returns boolean indicating if all required TeamViewer API credentials are set
