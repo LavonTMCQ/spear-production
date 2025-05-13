@@ -24,22 +24,32 @@ export const authConfig = {
       },
       async authorize(credentials) {
         try {
+          console.log("Auth: Authorizing with credentials:", credentials);
+
           if (!credentials?.email || !credentials?.password) {
+            console.log("Auth: Missing email or password");
             return null;
           }
 
           // First try to authenticate with database users
+          console.log("Auth: Looking up user in database:", credentials.email);
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email,
             },
           });
 
+          console.log("Auth: User found:", user ? "Yes" : "No", user);
+
           if (user) {
             // Hash the provided password and compare with the stored hash
             const hashedPassword = hashPassword(credentials.password);
+            console.log("Auth: Hashed password:", hashedPassword);
+            console.log("Auth: Stored password:", user.password);
+            console.log("Auth: Passwords match:", user.password === hashedPassword);
 
             if (user.password === hashedPassword) {
+              console.log("Auth: Authentication successful for database user");
               return {
                 id: user.id,
                 name: user.name || "",

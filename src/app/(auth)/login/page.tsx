@@ -25,6 +25,8 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
+    console.log("Submitting with email:", email, "and password:", password);
+
     try {
       // Use NextAuth signIn function
       const result = await signIn("credentials", {
@@ -33,7 +35,10 @@ export default function LoginPage() {
         redirect: false,
       });
 
+      console.log("SignIn result:", result);
+
       if (result?.error) {
+        console.error("SignIn error:", result.error);
         setError("Invalid email or password");
         setIsLoading(false);
         return;
@@ -41,10 +46,13 @@ export default function LoginPage() {
 
       // Get the session to check the user role
       const session = await auth();
+      console.log("Session after login:", session);
 
       if (session?.user?.role === "ADMIN") {
+        console.log("Redirecting to admin dashboard");
         router.push("/admin");
       } else {
+        console.log("Redirecting to client dashboard");
         router.push("/dashboard");
       }
     } catch (error) {
@@ -165,8 +173,14 @@ export default function LoginPage() {
                     size="sm"
                     className="flex-1 h-10 text-sm border-slate-700 text-slate-200 hover:text-white hover:bg-slate-800"
                     onClick={() => {
+                      console.log("Fill Admin button clicked");
                       setEmail("quiseforeverphilly@gmail.com");
                       setPassword("password");
+                      console.log("After setting - Email:", "quiseforeverphilly@gmail.com", "Password:", "password");
+                      // Small delay to ensure state is updated
+                      setTimeout(() => {
+                        console.log("After timeout - Email:", email, "Password:", password);
+                      }, 100);
                     }}
                   >
                     Fill Admin
