@@ -36,9 +36,10 @@ export const authConfig = {
           });
 
           if (user) {
-            // For database users, we'll use "password" as the default password
-            // since we don't have password hashes in the database schema
-            if (credentials.password === "password") {
+            // Hash the provided password and compare with the stored hash
+            const hashedPassword = hashPassword(credentials.password);
+
+            if (user.password === hashedPassword) {
               return {
                 id: user.id,
                 name: user.name || "",

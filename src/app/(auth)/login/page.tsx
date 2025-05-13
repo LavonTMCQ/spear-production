@@ -39,9 +39,14 @@ export default function LoginPage() {
         return;
       }
 
-      // Redirect based on user role
-      // We'll check the session on the dashboard pages to determine the role
-      router.push("/dashboard");
+      // Get the session to check the user role
+      const session = await auth();
+
+      if (session?.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error("Login error:", error);
       setError("An error occurred. Please try again.");
