@@ -86,7 +86,9 @@ const mockDevices: TeamViewerDevice[] = [
 export async function getTeamViewerToken(): Promise<string> {
   // Use the script token for authentication
   // This is a simpler approach than OAuth for development and testing
-  return '26405094-jajtBr0ScJN8z3e83zsY';
+  const scriptToken = '26405094-jajtBr0ScJN8z3e83zsY';
+  console.log('Using TeamViewer script token for authentication');
+  return scriptToken;
 }
 
 /**
