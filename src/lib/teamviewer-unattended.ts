@@ -159,13 +159,28 @@ export async function connectToUnattendedDevice(deviceId: string): Promise<Unatt
 
       console.log(`Using unattended access for device ${device.name} with ID: ${formattedRemoteId}`);
 
-      // For unattended access, we don't need a session
-      // We just return the direct connection information
+      // For unattended access, we need to use the correct URL format for Host mode
+      // This is the key to making unattended access work properly
+
+      // Get device information for the URL
+      const deviceName = device.name || 'Android Device';
+      const deviceType = 'Mobile';
+
+      // Create the proper web client URL for unattended access (Host mode)
+      const webClientUrl = `https://web.teamviewer.com/Connect?uiMode=OneUI&lng=en&TabMode=MultiTabUI&machineId=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
+
+      // Create the proper direct connection URL for unattended access (Host mode)
+      const connectionUrl = `teamviewer10://control?s=${formattedRemoteId}&deviceName=${encodeURIComponent(deviceName)}&deviceType=${deviceType}&connectByKnownDeviceMode=RemoteControl`;
+
+      console.log(`Created unattended access URLs for device ${deviceName}:`);
+      console.log(`- Web client URL: ${webClientUrl}`);
+      console.log(`- Direct connection URL: ${connectionUrl}`);
+
       return {
         deviceId: formattedRemoteId,
         password: '', // No password needed for unattended access
-        connectionUrl: `teamviewer10://control?s=${formattedRemoteId}`,
-        webClientUrl: `https://start.teamviewer.com/${formattedRemoteId}`,
+        connectionUrl: connectionUrl,
+        webClientUrl: webClientUrl,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours by default
       };
     }
