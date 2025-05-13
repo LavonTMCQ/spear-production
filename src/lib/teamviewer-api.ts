@@ -6,13 +6,23 @@
  */
 
 /**
- * Format a TeamViewer device ID by removing spaces
+ * Format a TeamViewer device ID by removing spaces and any 'r' prefix
  *
  * @param deviceId The device ID to format
  * @returns The formatted device ID
  */
 export function formatTeamViewerDeviceId(deviceId: string): string {
-  return deviceId.replace(/\s+/g, '');
+  if (!deviceId) return '';
+
+  // Remove spaces
+  let formatted = deviceId.replace(/\s+/g, '');
+
+  // Remove 'r' prefix if present (TeamViewer sometimes adds this)
+  if (formatted.startsWith('r') && !isNaN(parseInt(formatted.substring(1)))) {
+    formatted = formatted.substring(1);
+  }
+
+  return formatted;
 }
 
 import { getTeamViewerConfig } from './teamviewer-config';
@@ -124,47 +134,14 @@ export async function getTeamViewerDevices(): Promise<TeamViewerDevice[]> {
       return data.devices;
     }
 
-    // If no devices are found in the API, we'll use a mock device for testing
-    console.log('No devices found in TeamViewer account, using mock device for testing');
-
-    // Create a device object with your real TeamViewer device info
-    const realDevice: TeamViewerDevice = {
-      id: 'd1645844505',
-      name: 'Spear Test A14',
-      online_state: 'online',
-      alias: 'quiseforeverphilly@gmail.com',
-      last_seen: new Date().toISOString(),
-      device_info: {
-        model: 'Samsung A14',
-        manufacturer: 'Samsung',
-        os_version: 'Android'
-      }
-    };
-
-    // Return the real device
-    return [realDevice];
+    // If no devices are found in the API, return an empty array
+    console.log('No devices found in TeamViewer account');
+    return [];
   } catch (error) {
     console.error('Error fetching TeamViewer devices:', error);
 
-    // Fallback to mock data for development
-    console.log('Falling back to mock device data due to error');
-
-    // Create a device object with your real TeamViewer device info
-    const realDevice: TeamViewerDevice = {
-      id: 'd1645844505',
-      name: 'Spear Test A14',
-      online_state: 'online',
-      alias: 'quiseforeverphilly@gmail.com',
-      last_seen: new Date().toISOString(),
-      device_info: {
-        model: 'Samsung A14',
-        manufacturer: 'Samsung',
-        os_version: 'Android'
-      }
-    };
-
-    // Return the real device
-    return [realDevice];
+    // Rethrow the error to be handled by the caller
+    throw error;
   }
 }
 
@@ -192,18 +169,8 @@ export async function getTeamViewerDevice(deviceId: string): Promise<TeamViewerD
  */
 export async function createTeamViewerSession(deviceId: string): Promise<TeamViewerSession> {
   try {
-    // For your real device, we'll create a real session
-    if (deviceId === 'd1645844505') {
-      console.log('Creating session for your real device');
-
-      // For direct connection to your device, we'll use the TeamViewer ID
-      return {
-        id: `s${Math.random().toString(36).substring(2, 10)}`,
-        code: '579487224', // Your actual TeamViewer ID
-        state: 'Open',
-        created: new Date().toISOString()
-      };
-    }
+    // Log the device ID we're creating a session for
+    console.log(`Creating TeamViewer session for device ${deviceId}...`);
 
     // For real devices, make a real API call
     const token = await getTeamViewerToken();
@@ -242,15 +209,8 @@ export async function createTeamViewerSession(deviceId: string): Promise<TeamVie
   } catch (error) {
     console.error(`Error creating TeamViewer session for device ${deviceId}:`, error);
 
-    // Fallback to mock data for development
-    console.log('Falling back to mock session data due to error');
-
-    return {
-      id: `s${Math.random().toString(36).substring(2, 10)}`,
-      code: '579487224', // Your actual TeamViewer ID
-      state: 'Open',
-      created: new Date().toISOString()
-    };
+    // Rethrow the error to be handled by the caller
+    throw error;
   }
 }
 
@@ -262,15 +222,28 @@ export async function createTeamViewerSession(deviceId: string): Promise<TeamVie
  */
 export async function endTeamViewerSession(sessionId: string): Promise<TeamViewerSession> {
   try {
-    // In a real implementation, this would make an API call to end a session
-    // For now, we'll just return mock data
+    // Get a real API token
+    const token = await getTeamViewerToken();
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log(`Ending TeamViewer session ${sessionId}...`);
+
+    // Make a real API call to end the session
+    const response = await fetch(`https://webapi.teamviewer.com/api/v1/sessions/${sessionId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Failed to end TeamViewer session:', response.status, await response.text());
+      throw new Error(`Failed to end TeamViewer session: ${response.status}`);
+    }
 
     return {
       id: sessionId,
-      code: 'd12345',
+      code: '',
       state: 'Closed',
       created: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
       end: new Date().toISOString()

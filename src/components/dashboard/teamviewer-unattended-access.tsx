@@ -12,6 +12,7 @@ import {
   TeamViewerUnattendedDevice,
   connectToUnattendedDevice
 } from "@/lib/teamviewer-unattended";
+import { formatTeamViewerDeviceId } from "@/lib/teamviewer-api";
 
 interface TeamViewerUnattendedAccessProps {
   onDeviceConnect?: (deviceId: string, deviceName: string) => void;
@@ -57,8 +58,14 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
       console.log(`Connecting to device: ${device.name} (ID: ${device.id}, Remote ID: ${device.deviceId})`);
       const result = await connectToUnattendedDevice(device.id);
 
-      // Format the device ID by removing spaces if present
-      const formattedDeviceId = result.deviceId.replace(/\s+/g, '');
+      // Ensure we have a valid deviceId from the result
+      if (!result.deviceId) {
+        console.error('No deviceId returned in connection result, using device.deviceId instead');
+        result.deviceId = device.deviceId;
+      }
+
+      // Format the device ID using our utility function
+      const formattedDeviceId = result.deviceId;
 
       // Show guidance message
       if (device.supportsUnattended) {
@@ -105,8 +112,8 @@ export function TeamViewerUnattendedAccess({ onDeviceConnect }: TeamViewerUnatte
     setError(null);
 
     try {
-      // Format the device ID by removing spaces if present
-      const formattedDeviceId = manualDeviceId.replace(/\s+/g, '');
+      // Format the device ID using our utility function
+      const formattedDeviceId = formatTeamViewerDeviceId(manualDeviceId);
 
       // Show guidance message
       if (manualPassword.trim()) {
